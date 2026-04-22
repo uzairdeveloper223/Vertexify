@@ -1,0 +1,11 @@
+let base = cube(width: 10.0, height: 2.0, depth: 10.0)
+spawn(base)
+
+let sphere_obj = sphere(radius: 3.0, segments: 32, rings: 16)
+spawn(sphere_obj)
+
+let cyl = cylinder(radius: 1.5, height: 5.0, segments: 24)
+spawn(cyl)
+
+let ground = plane(width: 20.0, depth: 20.0)
+spawn(ground)

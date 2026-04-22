@@ -1,0 +1,12 @@
+let box1 = cube(width: 2.0, height: 2.0, depth: 2.0)
+box1.translate(x: 5.0, y: 0.0, z: 0.0)
+spawn(box1)
+
+let box2 = cube(width: 2.0, height: 2.0, depth: 2.0)
+box2.translate(x: -5.0, y: 0.0, z: 0.0)
+box2.scale(x: 1.5, y: 1.5, z: 1.5)
+spawn(box2)
+
+let sphere1 = sphere(radius: 1.0, segments: 32, rings: 16)
+sphere1.translate(x: 0.0, y: 3.0, z: 0.0)
+spawn(sphere1)
