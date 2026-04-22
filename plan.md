@@ -27,18 +27,18 @@ the core feature is `vx`, a custom scripting language for procedural generation 
 
 ```vx
 // define base geometry
-let base = cube(width: 10.0, height: 2.0, depth: 10.0)
-base.set_material(color: "#333333", roughness: 0.8)
+let base = cube(id: "cube1", w: 10.0, h: 2.0, d: 10.0)
+base.set_material(id: "mat1", color: "#333333", roughness: 0.8, object: "cube1") ## applies to object which is passed to it and will apply when that object is requested to be spawned.
 
 // define cutout
-let hole = cylinder(radius: 2.0, height: 4.0)
-hole.translate(y: -1.0)
+let hole = cylinder(id: "cylinder1", r: 2.0, h: 4.0)
+hole.translate(id: "translate1", object: "cylinder1", x: 0.0, y: 0.0, z: 0.0) ## applies to object which is passed to it and will apply when that object is requested to be spawned.
 
 // boolean operation
-let part = difference(base, hole)
+let part = difference(id: "diff1", object1: "base", object2: "hole") ## will also get the translation and material properties of objects that are passed to it, and will let be spawned as declared.
 
 // instantiate
-spawn(part)
+spawn(part, pos: "xyz(1.0, 2.0, 3.0)") ## creates a translation object and applies it to the spawned object.
 ```
 
 ### 2.3 interpreter architecture
