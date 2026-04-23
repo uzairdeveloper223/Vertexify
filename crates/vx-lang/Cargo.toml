@@ -1,0 +1,8 @@
+[package]
+name    = "vx-lang"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+thiserror.workspace = true
+logos = "0.15"

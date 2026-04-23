@@ -1,0 +1,9 @@
+[package]
+name    = "vx-render"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+thiserror.workspace = true
+glam.workspace = true
+wgpu = "29.0.1"

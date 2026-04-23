@@ -1,0 +1,8 @@
+[package]
+name    = "vx-ui"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+thiserror.workspace = true
+egui = "0.34.1"

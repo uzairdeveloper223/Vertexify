@@ -1,0 +1,26 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/vx-lang",
+    "crates/vx-geometry",
+    "crates/vx-render",
+    "crates/vx-scene",
+    "crates/vx-ui",
+    "crates/vx-io",
+    "crates/vx-app",
+]
+
+[workspace.package]
+version     = "0.1.0"
+edition     = "2021"
+rust-version = "1.80"
+authors     = ["Vertexify Contributors"]
+license     = "MIT"
+
+[workspace.dependencies]
+anyhow    = "1.0.102"
+thiserror = "2.0.18"
+tracing   = "0.1"
+serde     = { version = "1", features = ["derive"] }
+glam      = { version = "0.32.1", features = ["serde"] }
+rayon     = "1.12.0"

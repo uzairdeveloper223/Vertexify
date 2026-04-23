@@ -1,0 +1,28 @@
+[package]
+name    = "vx-app"
+version.workspace = true
+edition.workspace = true
+
+[[bin]]
+name = "vertexify"
+path = "src/main.rs"
+
+[dependencies]
+vx-lang     = { path = "../vx-lang" }
+vx-geometry = { path = "../vx-geometry" }
+vx-render   = { path = "../vx-render" }
+vx-scene    = { path = "../vx-scene" }
+vx-ui       = { path = "../vx-ui" }
+vx-io       = { path = "../vx-io" }
+
+wgpu             = "29.0.1"
+egui             = "0.34.1"
+egui-wgpu        = { version = "0.34.1", features = ["winit"] }
+egui-winit       = "0.34.1"
+winit            = "0.30.13"
+pollster         = "0.3"
+anyhow.workspace = true
+tracing.workspace = true
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+serde.workspace  = true
+toml             = "0.8"

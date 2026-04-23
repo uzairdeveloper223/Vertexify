@@ -1,0 +1,9 @@
+[package]
+name    = "vx-io"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+thiserror.workspace = true
+anyhow.workspace = true
+serde.workspace = true

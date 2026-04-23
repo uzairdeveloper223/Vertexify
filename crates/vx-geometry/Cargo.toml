@@ -1,0 +1,9 @@
+[package]
+name    = "vx-geometry"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+thiserror.workspace = true
+glam.workspace = true
+rayon.workspace = true

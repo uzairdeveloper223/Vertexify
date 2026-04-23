@@ -1,0 +1,22 @@
+[render]
+render_scale     = 1.0
+idle_rendering   = true
+msaa_samples     = 1
+ssao             = true
+ssao_samples     = 8
+max_lights       = 16
+
+[vx]
+eval_timeout_s      = 30
+max_recursion_depth = 64
+max_iterations      = 1000000
+max_triangle_count  = 10000000
+
+[ui]
+font_size           = 14
+theme               = "dark"
+autosave_interval_s = 30
+undo_history        = 100
+
+[io]
+default_export_format = "obj"
