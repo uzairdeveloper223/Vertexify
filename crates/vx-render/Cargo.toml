@@ -3,7 +3,12 @@ name    = "vx-render"
 version.workspace = true
 edition.workspace = true
 
+[features]
+# Enable the wgpu backend. Off by default while the crate is a stub so
+# `cargo check --workspace` stays fast. Turn on when Phase 3 begins.
+gpu = ["dep:wgpu"]
+
 [dependencies]
 thiserror.workspace = true
 glam.workspace = true
-wgpu = "29.0.1"
+wgpu = { version = "29.0.1", optional = true }

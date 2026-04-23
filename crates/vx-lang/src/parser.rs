@@ -24,6 +24,11 @@ impl<'s> Parser<'s> {
         self.tokens.get(self.cursor).map(|(t, _)| t)
     }
 
+    /// Peek at the token one position ahead without consuming.
+    fn peek_next(&self) -> Option<&Token<'s>> {
+        self.tokens.get(self.cursor + 1).map(|(t, _)| t)
+    }
+
     fn span(&self) -> Span {
         self.tokens
             .get(self.cursor)
@@ -66,12 +71,15 @@ impl<'s> Parser<'s> {
     fn parse_decl(&mut self) -> Result<Spanned<Decl>, LangError> {
         let start = self.span().start;
         match self.peek() {
-            Some(Token::Fn) => self.parse_fn_decl(start),
+            Some(Token::Fn)  => self.parse_fn_decl(start),
             Some(Token::Let) => self.parse_top_let(start),
-            _ => Err(LangError::ParseError {
-                msg: "expected 'fn' or 'let' at top level".into(),
-                offset: start,
-            }),
+            Some(_) => {
+                // Any other token: parse as a bare statement at module scope
+                let stmt = self.parse_stmt()?;
+                let span = stmt.span.clone();
+                Ok(Spanned::new(Decl::Stmt(stmt), span))
+            }
+            None => Err(LangError::UnexpectedEof),
         }
     }
 
@@ -204,6 +212,27 @@ impl<'s> Parser<'s> {
                 let body = Box::new(self.parse_block_expr()?);
                 let end = body.span.end;
                 Ok(Spanned::new(Stmt::For { var, iter, body }, start..end))
+            }
+            _ if matches!(self.peek(), Some(Token::Ident(_)))
+                && matches!(
+                    self.peek_next(),
+                    Some(Token::Eq | Token::PlusEq | Token::MinusEq | Token::StarEq | Token::SlashEq)
+                ) =>
+            {
+                let target_span = self.span();
+                let name_str = self.parse_ident()?;
+                let target = Spanned::new(Expr::Ident(name_str), target_span.clone());
+                let op = match self.advance() {
+                    Some((Token::Eq, _))      => AssignOp::Assign,
+                    Some((Token::PlusEq, _))  => AssignOp::AddAssign,
+                    Some((Token::MinusEq, _)) => AssignOp::SubAssign,
+                    Some((Token::StarEq, _))  => AssignOp::MulAssign,
+                    Some((Token::SlashEq, _)) => AssignOp::DivAssign,
+                    _ => unreachable!(),
+                };
+                let value = self.parse_expr()?;
+                let end = self.expect(&Token::Semi)?.end;
+                Ok(Spanned::new(Stmt::Assign { target, op, value }, start..end))
             }
             _ => {
                 let expr = self.parse_expr()?;

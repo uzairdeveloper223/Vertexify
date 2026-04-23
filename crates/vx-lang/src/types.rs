@@ -256,6 +256,33 @@ pub fn check_module(module: &Module, env: &mut TypeEnv) -> Result<(), LangError>
                 let resolved = ty.clone().unwrap_or(inferred);
                 env.bind(name, resolved);
             }
+            Decl::Stmt(stmt) => match &stmt.node {
+                Stmt::Expr(e) => { infer(e, env)?; }
+                Stmt::Assign { target, value, .. } => {
+                    // Check rhs; target type check is best-effort
+                    if let Expr::Ident(name) = &target.node {
+                        if env.lookup(name).is_some() {
+                            infer(value, env)?;
+                        }
+                    } else {
+                        infer(value, env)?;
+                    }
+                }
+                Stmt::For { iter, body, .. } => {
+                    infer(iter, env)?;
+                    infer(body, env)?;
+                }
+                Stmt::Return(val) => {
+                    if let Some(e) = val { infer(e, env)?; }
+                }
+                Stmt::Let { name, ty, init } => {
+                    if let Some(e) = init {
+                        let inferred = infer(e, env)?;
+                        let resolved = ty.clone().unwrap_or(inferred);
+                        env.bind(name, resolved);
+                    }
+                }
+            },
         }
     }
     Ok(())

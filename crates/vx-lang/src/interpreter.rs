@@ -19,6 +19,7 @@ pub enum Value {
     Color([f32; 4]),
     Text2d(Box<TextData>),
     Text3d(Box<TextData>),
+    Range(i64, i64),
     Null,
     Fn {
         params: Vec<Param>,
@@ -45,6 +46,7 @@ impl std::fmt::Display for Value {
             Value::Mat4(_) => write!(f, "mat4(...)"),
             Value::Text2d(d) => write!(f, "text2d({:?})", d.content),
             Value::Text3d(d) => write!(f, "text3d({:?})", d.content),
+            Value::Range(lo, hi) => write!(f, "{lo}..{hi}"),
             Value::Null => write!(f, "null"),
             Value::Fn { .. } => write!(f, "<fn>"),
             Value::NativeFn { name, .. } => write!(f, "<builtin:{name}>"),
@@ -243,7 +245,10 @@ fn eval_binary(op: &BinOp, lhs: &Spanned<Expr>, rhs: &Spanned<Expr>, env: &mut E
             (Value::Bool(a), Value::Bool(b)) => Ok(Value::Bool(*a || *b)),
             _ => Err(err("|| requires bool operands")),
         },
-        BinOp::Range => Err(err("range not yet implemented as a value")),
+        BinOp::Range => match (&l, &r) {
+            (Value::Int(lo), Value::Int(hi)) => Ok(Value::Range(*lo, *hi)),
+            _ => Err(err("range operator `..` requires integer operands")),
+        },
     }
 }
 
@@ -348,17 +353,17 @@ fn eval_stmt(stmt: &Spanned<Stmt>, env: &mut Env) -> Result<Option<Value>, LangE
         }
         Stmt::For { var, iter, body } => {
             let iter_val = eval_expr(iter, env)?;
-            match iter_val {
-                Value::Int(n) => {
-                    for i in 0..n {
-                        env.push_frame()?;
-                        env.set(var, Value::Int(i));
-                        let result = eval_expr(body, env);
-                        env.pop_frame();
-                        result?;
-                    }
-                }
-                _ => return Err(err("for loop requires integer value as upper bound")),
+            let (lo, hi) = match iter_val {
+                Value::Int(n)          => (0, n),
+                Value::Range(lo, hi)   => (lo, hi),
+                _ => return Err(err("for loop requires int or range (e.g. `10` or `0..10`)")),
+            };
+            for i in lo..hi {
+                env.push_frame()?;
+                env.set(var, Value::Int(i));
+                let result = eval_expr(body, env);
+                env.pop_frame();
+                result?;
             }
             Ok(None)
         }
@@ -421,6 +426,9 @@ pub fn eval_module(module: &Module, env: &mut Env) -> Result<(), LangError> {
                 let fn_val = Value::Fn { params: params.clone(), body: body.clone(), closure: env.snapshot() };
                 env.set(name, fn_val);
             }
+            Decl::Stmt(stmt) => {
+                eval_stmt(stmt, env)?;
+            }
         }
     }
     Ok(())
@@ -436,6 +444,7 @@ mod tests {
     fn run(src: &str) -> Env {
         let module = Parser::new(src).unwrap().parse_module().unwrap();
         let mut env = Env::new();
+        register_builtins(&mut env);
         eval_module(&module, &mut env).unwrap();
         env
     }
@@ -449,14 +458,29 @@ mod tests {
     #[test] fn arithmetic() { assert_eq!(get(&run("let r: int = 2 + 3 * 4;"), "r"), Value::Int(14)); }
     #[test] fn comparison() { assert_eq!(get(&run("let ok: bool = 3 < 5;"), "ok"), Value::Bool(true)); }
     #[test] fn string_concat() { assert_eq!(get(&run(r#"let s: str = "foo" + "bar";"#), "s"), Value::Str("foobar".into())); }
-    #[test] fn fn_defined() {
-        let env = run("fn double(n: int) -> int { n; } let r: int = double(21);");
-        assert_eq!(get(&env, "r"), Value::Int(21));
+    #[test] fn fn_double() {
+        let env = run("fn double(n: int) -> int { n * 2; } let r: int = double(21);");
+        assert_eq!(get(&env, "r"), Value::Int(42));
     }
     #[test] fn negation() { assert_eq!(get(&run("let n: int = -5;"), "n"), Value::Int(-5)); }
     #[test] fn not_bool() { assert_eq!(get(&run("let b: bool = !true;"), "b"), Value::Bool(false)); }
     #[test] fn if_true() { assert_eq!(get(&run("let v: int = if true { 1; } else { 2; };"), "v"), Value::Int(1)); }
     #[test] fn if_false() { assert_eq!(get(&run("let v: int = if false { 1; } else { 2; };"), "v"), Value::Int(2)); }
+    #[test] fn for_int_bound() {
+        // for i in 4 → i runs 0,1,2,3; sum = 0+1+2+3 = 6
+        let env = run("let s: int = 0; for i in 4 { s = s + i; }");
+        assert_eq!(get(&env, "s"), Value::Int(6));
+    }
+    #[test] fn for_range() {
+        // for i in 2..5 → i runs 2,3,4; sum = 9
+        let env = run("let s: int = 0; for i in 2..5 { s = s + i; }");
+        assert_eq!(get(&env, "s"), Value::Int(9));
+    }
+    #[test] fn range_value() {
+        // range expression as a standalone value
+        let env = run("let r = 1..10;");
+        assert_eq!(get(&env, "r"), Value::Range(1, 10));
+    }
 }
 
 // ── text geometry ──────────────────────────────────────────────────────────

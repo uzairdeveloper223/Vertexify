@@ -185,6 +185,8 @@ pub enum Decl {
         ty: Option<Ty>,
         init: Spanned<Expr>,
     },
+    /// A bare statement at module scope (for loops, assignments, expressions).
+    Stmt(Spanned<Stmt>),
 }
 
 /// Root of a parsed VX source file.
